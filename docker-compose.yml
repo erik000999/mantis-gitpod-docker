@@ -1,37 +1,37 @@
-version: "3.9"
+version: '3.8'
 
 services:
-  mantis:
-    image: okainov/mantisbt:latest
-    ports:
-      - "8989:80"
-    environment:
-      MANTIS_ENABLE_ADMIN: 1
-      MASTER_SALT: "CambieMEporUnValorSeguro"
-    depends_on:
-      - db
-    restart: always
-    user: root
-    command: /bin/bash -c "chmod -R 755 /var/log/apache2 && apache2-foreground"
-    volumes:
-      - logs:/var/log/apache2
-
   db:
-    image: mysql:5.7
+    image: mariadb:10.6
+    container_name: mantis-db
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: bugtracker
       MYSQL_USER: mantis
-      MYSQL_PASSWORD: mantis
+      MYSQL_PASSWORD: mantisbt
     volumes:
       - db_data:/var/lib/mysql
-    restart: always
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--password=root"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+    networks:
+      - mantis-net
+
+  mantisbt:
+    image: vimagick/mantisbt
+    container_name: mantis-app
+    ports:
+      - "8989:80"
+    environment:
+      - DB_TYPE=mysqli
+      - DB_HOST=db
+      - DB_NAME=bugtracker
+      - DB_USER=mantis
+      - DB_PASSWORD=mantisbt
+    depends_on:
+      - db
+    networks:
+      - mantis-net
 
 volumes:
   db_data:
-  logs:
+
+networks:
+  mantis-net:
