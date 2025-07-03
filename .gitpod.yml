@@ -1,0 +1,16 @@
+image: gitpod/workspace-full
+
+tasks:
+  - name: Arranque de Mantis
+    init: |
+      docker compose down -v
+      docker compose up -d
+      echo "Esperando que la base de datos esté lista..."
+      until docker exec $(docker compose ps -q db) mysqladmin ping -h localhost --password=root | grep -q "mysqld is alive"; do sleep 5; done
+      echo "Base de datos lista. Esperando que el servicio de Mantis esté activo..."
+      sleep 10
+      gp ports await 8989
+
+ports:
+  - port: 8989
+    onOpen: open-preview

@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  mantis:
+    image: okainov/mantisbt:latest
+    ports:
+      - "8989:80"
+    environment:
+      MANTIS_ENABLE_ADMIN: 1
+      MASTER_SALT: "CambieMEporUnValorSeguro"
+    depends_on:
+      - db
+    restart: always
+    user: root
+    command: /bin/bash -c "chmod -R 755 /var/log/apache2 && apache2-foreground"
+    volumes:
+      - logs:/var/log/apache2
+
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: bugtracker
+      MYSQL_USER: mantis
+      MYSQL_PASSWORD: mantis
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--password=root"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  db_data:
+  logs:
